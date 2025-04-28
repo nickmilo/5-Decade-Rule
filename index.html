@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Five Decade Rule</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #2c3e50 0%, #4a5568 100%);
+            color: white;
+            padding: 30px 0;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            margin: 0;
+            font-size: 2.2rem;
+        }
+        
+        h2 {
+            color: #2c3e50;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+        }
+        
+        h3 {
+            color: #3498db;
+            margin-top: 25px;
+            font-size: 1.4rem;
+        }
+        
+        .subtitle {
+            opacity: 0.8;
+            font-size: 1.2rem;
+            margin-top: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        textarea {
+            height: 120px;
+            resize: vertical;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .results {
+            display: none;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+        
+        .circle-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 30px auto;
+        }
+        
+        .circle {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .circle-bg {
+            fill: none;
+            stroke: #eee;
+            stroke-width: 15;
+        }
+        
+        .circle-progress {
+            fill: none;
+            stroke: #2c3e50;
+            stroke-width: 15;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            transition: stroke-dashoffset 0.5s;
+        }
+        
+        .circle-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .idea-grandparents {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border-left: 5px solid #3498db;
+        }
+        
+        .idea-grandparent {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #ddd;
+        }
+        
+        .idea-grandparent:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .idea-grandparent-name {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+        
+        .idea-grandparent-years {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .idea-grandparent-description {
+            margin-top: 5px;
+        }
+        
+        .stats-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        
+        .stat-box {
+            flex-basis: 48%;
+            background-color: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .stat-title {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .email-capture {
+            margin-top: 40px;
+            padding: 25px;
+            background-color: #e8f4fd;
+            border-radius: 8px;
+            border: 1px solid #d1e8ff;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .interests-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .interest-tag {
+            background-color: #f1f1f1;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 5px 15px;
+            display: inline-block;
+            cursor: pointer;
+        }
+        
+        .interest-tag.selected {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .cta-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #3498db;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .cta-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>The Five Decade Rule</h1>
+            <div class="subtitle">Discover your idea grandparents - thinkers and doers born 5 decades before you</div>
+        </header>
+        
+        <div id="survey-form">
+            <p>The Five Decade Rule suggests that we can gain unique insights from thinkers and doers born approximately 50 years before us. These are our "idea grandparents" - not of blood, but of thought.</p>
+            
+            <h2>Find Your Idea Grandparents</h2>
+            
+            <div class="form-group">
+                <label for="birth-year">What year were you born?</label>
+                <input type="number" id="birth-year" min="1900" max="2023" placeholder="Enter year (e.g., 1985)" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Select your primary interests (choose up to 3):</label>
+                <div class="interests-container">
+                    <div class="interest-tag" data-interest="science">Science</div>
+                    <div class="interest-tag" data-interest="philosophy">Philosophy</div>
+                    <div class="interest-tag" data-interest="art">Art & Literature</div>
+                    <div class="interest-tag" data-interest="business">Business & Entrepreneurship</div>
+                    <div class="interest-tag" data-interest="technology">Technology</div>
+                    <div class="interest-tag" data-interest="psychology">Psychology</div>
+                    <div class="interest-tag" data-interest="history">History & Politics</div>
+                    <div class="interest-tag" data-interest="spirituality">Spirituality</div>
+                </div>
+                <input type="hidden" id="selected-interests" value="">
+            </div>
+            
+            <div class="form-group">
+                <label for="current-influences">Who are some thinkers or creators who currently influence you?</label>
+                <textarea id="current-influences" placeholder="Enter names separated by commas"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="challenges">What intellectual or creative challenges are you currently facing?</label>
+                <textarea id="challenges" placeholder="Describe the questions or problems you're currently wrestling with"></textarea>
+            </div>
+            
+            <button id="calculate-btn">Discover My Idea Grandparents</button>
+        </div>
+        
+        <div id="results" class="results">
+            <h2>Your Five Decade Insights</h2>
+            
+            <div class="circle-container">
+                <svg class="circle" viewBox="0 0 100 100">
+                    <circle class="circle-bg" cx="50" cy="50" r="40"></circle>
+                    <circle class="circle-progress" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="0"></circle>
+                </svg>
+                <div class="circle-text">50 Years</div>
+            </div>
+            
+            <p class="result-text">Based on your birth year of <span id="birth-year-result"></span>, your idea grandparents were born around <span id="grandparent-years"></span>.</p>
+            
+            <h3>Your Potential Idea Grandparents</h3>
+            <div class="idea-grandparents" id="grandparents-list">
+                <!-- Grandparents will be populated here -->
+            </div>
+            
+            <div class="stats-container">
+                <div class="stat-box">
+                    <div class="stat-title">Their Era</div>
+                    <div class="stat-value" id="era-value"></div>
+                    <div id="era-context"></div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-title">Cultural Context</div>
+                    <div class="stat-value" id="context-value"></div>
+                    <div id="context-description"></div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-title">Time Gap</div>
+                    <div class="stat-value" id="time-gap"></div>
+                    <div id="time-comparison"></div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-title">Connection Potential</div>
+                    <div class="stat-value" id="connection-value"></div>
+                    <div id="connection-explanation"></div>
+                </div>
+            </div>
+            
+            <h3>Why This Matters</h3>
+            <p>Your idea grandparents offer unique value because they are:</p>
+            <ul>
+                <li><strong>Old enough</strong> to have already made their greatest contributions</li>
+                <li><strong>Young enough</strong> to share cultural understandings with you</li>
+                <li><strong>Distant enough</strong> that you won't feel competition towards them</li>
+                <li><strong>Close enough</strong> that you can contextualize their life experiences</li>
+            </ul>
+            
+            <div class="email-capture">
+                <h3>Get Your Complete Five Decade Analysis</h3>
+                <p>Enter your email to receive detailed profiles of your idea grandparents and personalized recommendations based on your responses:</p>
+                <form id="email-form" action="https://formspree.io/f/xgvkvboy" method="POST">
+                    <input type="hidden" name="birth_year" id="email-birth-year">
+                    <input type="hidden" name="interests" id="email-interests">
+                    <input type="hidden" name="grandparents" id="email-grandparents">
+                    <input type="hidden" name="challenges" id="email-challenges">
+                    
+                    <div class="form-group">
+                        <input type="email" name="email" placeholder="Your email address" required>
+                    </div>
+                    <button type="submit">Send Me My Analysis</button>
+                </form>
+            </div>
+        </div>
+        
+        <footer>
+            <p>© 2025 The Five Decade Rule | Created by Nick Milo</p>
+            <a href="https://www.youtube.com/watch?v=your-video-id" class="cta-link" target="_blank">Watch the full explanation on YouTube</a>
+        </footer>
+    </div>
+    
+    <script>
+        // Database of notable thinkers and their birth years, categorized by interest
+        const notableThinkers = {
+            science: [
+                { name: "Carl Sagan", born: 1934, died: 1996, description: "Astronomer, cosmologist, and science communicator known for making complex scientific ideas accessible to the public." },
+                { name: "Richard Feynman", born: 1918, died: 1988, description: "Theoretical physicist known for his work in quantum mechanics and particle physics, as well as his engaging teaching style." },
+                { name: "Jane Goodall", born: 1934, description: "Primatologist and anthropologist known for her groundbreaking studies of chimpanzees in Tanzania." },
+                { name: "Rachel Carson", born: 1907, died: 1964, description: "Marine biologist and author whose book 'Silent Spring' helped launch the environmental movement." },
+                { name: "Jonas Salk", born: 1914, died: 1995, description: "Medical researcher who developed the first successful polio vaccine." },
+                { name: "Albert Einstein", born: 1879, died: 1955, description: "Theoretical physicist who developed the theory of relativity and made significant contributions to quantum mechanics." },
+                { name: "Marie Curie", born: 1867, died: 1934, description: "Physicist and chemist who conducted pioneering research on radioactivity and discovered the elements polonium and radium." },
+                { name: "Stephen Hawking", born: 1942, died: 2018, description: "Theoretical physicist known for his work on black holes and relativity, and for making science accessible to the public." }
+            ],
+            philosophy: [
+                { name: "Hannah Arendt", born: 1906, died: 1975, description: "Political philosopher known for her work on totalitarianism, political theory, and the nature of power and authority." },
+                { name: "Jean-Paul Sartre", born: 1905, died: 1980, description: "Existentialist philosopher, playwright, and novelist who emphasized individual existence, freedom, and choice." },
+                { name: "Simone de Beauvoir", born: 1908, died: 1986, description: "Existentialist philosopher, writer, and social theorist known for her treatise 'The Second Sex'." },
+                { name: "Ludwig Wittgenstein", born: 1889, died: 1951, description: "Philosopher who worked primarily in logic, philosophy of mathematics, philosophy of mind, and philosophy of language." },
+                { name: "Karl Popper", born: 1902, died: 1994, description: "Philosopher of science known for his rejection of the classical inductivist views on the scientific method." },
+                { name: "Bertrand Russell", born: 1872, died: 1970, description: "Philosopher, logician, mathematician, and social critic known for his work in analytic philosophy." }
+            ],
+            art: [
+                { name: "Frida Kahlo", born: 1907, died: 1954, description: "Painter known for her self-portraits and works inspired by nature and Mexican culture." },
+                { name: "Georgia O'Keeffe", born: 1887, died: 1986, description: "Painter known for her flowers, New York skyscrapers, and New Mexico landscapes." },
+                { name: "James Baldwin", born: 1924, died: 1987, description: "Writer and social critic known for his essays on the Black experience in America." },
+                { name: "Pablo Picasso", born: 1881, died: 1973, description: "Revolutionary artist who co-founded Cubism and created over 20,000 works across various mediums." },
+                { name: "Virginia Woolf", born: 1882, died: 1941, description: "Modernist writer known for her use of stream of consciousness as a narrative device." },
+                { name: "Gabriel García Márquez", born: 1927, died: 2014, description: "Author known for popularizing magical realism and his novel 'One Hundred Years of Solitude'." }
+            ],
+            business: [
+                { name: "Peter Drucker", born: 1909, died: 2005, description: "Management consultant and author, known as the founder of modern management." },
+                { name: "W. Edwards Deming", born: 1900, died: 1993, description: "Engineer and statistician known for his work in quality control and management." },
+                { name: "Ray Kroc", born: 1902, died: 1984, description: "Businessman who turned McDonald's into a global franchise and revolutionized the fast food industry." },
+                { name: "Walt Disney", born: 1901, died: 1966, description: "Entrepreneur, animator, and film producer who pioneered the American animation industry." },
+                { name: "Warren Buffett", born: 1930, description: "Investor and business tycoon, known as the 'Oracle of Omaha' for his investment philosophy." }
+            ],
+            technology: [
+                { name: "Alan Turing", born: 1912, died: 1954, description: "Mathematician, computer scientist, and cryptanalyst who is considered the father of theoretical computer science." },
+                { name: "Grace Hopper", born: 1906, died: 1992, description: "Computer scientist and Navy rear admiral who was a pioneer of computer programming." },
+                { name: "Claude Shannon", born: 1916, died: 2001, description: "Mathematician and electrical engineer known as 'the father of information theory'." },
+                { name: "John von Neumann", born: 1903, died: 1957, description: "Mathematician and physicist who made major contributions to numerous fields, including computer science." },
+                { name: "Douglas Engelbart", born: 1925, died: 2013, description: "Engineer and inventor known for his work on human-computer interaction and the invention of the computer mouse." }
+            ],
+            psychology: [
+                { name: "Carl Jung", born: 1875, died: 1961, description: "Psychiatrist and psychoanalyst who founded analytical psychology and introduced concepts like the collective unconscious." },
+                { name: "B.F. Skinner", born: 1904, died: 1990, description: "Psychologist and behaviorist who developed the theory of operant conditioning." },
+                { name: "Viktor Frankl", born: 1905, died: 1997, description: "Psychiatrist and Holocaust survivor who founded logotherapy, focusing on the search for meaning in life." },
+                { name: "Jean Piaget", born: 1896, died: 1980, description: "Psychologist known for his work on child development and cognitive theory." },
+                { name: "Mihaly Csikszentmihalyi", born: 1934, died: 2021, description: "Psychologist who recognized and named the psychological concept of 'flow' - the state of complete immersion in an activity." }
+            ],
+            history: [
+                { name: "Howard Zinn", born: 1922, died: 2010, description: "Historian and political scientist known for 'A People's History of the United States'." },
+                { name: "Margaret Mead", born: 1901, died: 1978, description: "Cultural anthropologist known for her studies of social attitudes and child-rearing practices." },
+                { name: "Noam Chomsky", born: 1928, description: "Linguist, philosopher, and political activist known for his work in linguistics and his critique of U.S. foreign policy." },
+                { name: "Eric Hobsbawm", born: 1917, died: 2012, description: "Historian known for his work on the rise of industrial capitalism, socialism, and nationalism." }
+            ],
+            spirituality: [
+                { name: "Thomas Merton", born: 1915, died: 1968, description: "Catholic writer, theologian, and mystic known for his exploration of interfaith understanding." },
+                { name: "Thich Nhat Hanh", born: 1926, died: 2022, description: "Buddhist monk, peace activist, and author known for promoting mindfulness and engaged Buddhism." },
+                { name: "Ram Dass", born: 1931, died: 2019, description: "Spiritual teacher and author known for exploring Hindu spirituality and consciousness." },
+                { name: "Alan Watts", born: 1915, died: 1973, description: "Philosopher known for popularizing Eastern philosophy for Western audiences." }
+            ]
+        };
+        
+        // Historical eras by decade range
+        const historicalEras = [
+            { start: 1900, end: 1913, name: "Progressive Era", context: "A period of widespread social activism and political reform in the United States." },
+            { start: 1914, end: 1918, name: "World War I", context: "A global war that led to significant political, cultural, economic, and social changes." },
+            { start: 1919, end: 1929, name: "Roaring Twenties", context: "A period of economic prosperity, technological advancement, and cultural dynamism." },
+            { start: 1930, end: 1939, name: "Great Depression", context: "A severe worldwide economic depression that preceded World War II." },
+            { start: 1940, end: 1945, name: "World War II", context: "A global war that led to significant political realignment and the emergence of the United States and Soviet Union as superpowers." },
+            { start: 1946, end: 1964, name: "Post-War/Early Cold War", context: "A period of economic expansion, technological advancement, and geopolitical tension." },
+            { start: 1965, end: 1979, name: "Civil Rights/Vietnam Era", context: "A period of social and political upheaval, including the civil rights movement and anti-war protests." },
+            { start: 1980, end: 1991, name: "Late Cold War", context: "A period marked by tensions between the United States and Soviet Union, leading to the fall of communism in Eastern Europe." },
+            { start: 1992, end: 2001, name: "Information Age", context: "A period characterized by the rise of the internet and digital technology." },
+            { start: 2002, end: 2020, name: "Post-9/11/Digital Era", context: "A period marked by global terrorism concerns, economic fluctuations, and digital transformation." }
+        ];
+        
+        // DOM elements
+        const surveyForm = document.getElementById('survey-form');
+        const resultsDiv = document.getElementById('results');
+        const calculateBtn = document.getElementById('calculate-btn');
+        const interestTags = document.querySelectorAll('.interest-tag');
+        
+        // Interest tag selection (max 3)
+        interestTags.forEach(tag => {
+            tag.addEventListener('click', function() {
+                const selectedInterests = document.querySelectorAll('.interest-tag.selected');
+                
+                if (this.classList.contains('selected')) {
+                    this.classList.remove('selected');
+                } else if (selectedInterests.length < 3) {
+                    this.classList.add('selected');
+                }
+                
+                // Update hidden input with selected interests
+                const selected = Array.from(document.querySelectorAll('.interest-tag.selected'))
+                    .map(tag => tag.dataset.interest);
+                document.getElementById('selected-interests').value = selected.join(',');
+            });
+        });
+        
+        // Calculate button event
+        calculateBtn.addEventListener('click', function() {
+            const birthYear = parseInt(document.getElementById('birth-year').value);
+            
+            if (!birthYear || birthYear < 1900 || birthYear > 2023) {
+                alert('Please enter a valid birth year between 1900 and 2023');
+                return;
+            }
+            
+            const selectedInterests = document.getElementById('selected-interests').value;
+            if (!selectedInterests) {
+                alert('Please select at least one interest');
+                return;
+            }
+            
+            // Calculate and display results
+            calculateResults(birthYear, selectedInterests.split(','));
+        });
+        
+        // Form submission event for email capture
+        document.getElementById('email-form').addEventListener('submit', function(e) {
+            // e.preventDefault(); // Uncomment to prevent actual form submission
+            
+            // In a real implementation, you would send this data to your backend
+            // For now, just show an alert
+            alert('Thank you! Your Five Decade Analysis will be sent to your email shortly.');
+        });
+        
+        // Function to calculate and display results
+        function calculateResults(birthYear, interests) {
+            // Calculate idea grandparent year range (45-55 years before birth)
+            const minGrandparentYear = birthYear - 55;
+            const maxGrandparentYear = birthYear - 45;
+            const midGrandparentYear = birthYear - 50;
+            
+            // Find matching grandparents
+            let potentialGrandparents = [];
+            
+            interests.forEach(interest => {
+                if (notableThinkers[interest]) {
+                    const matchingThinkers = notableThinkers[interest].filter(thinker => 
+                        thinker.born >= minGrandparentYear && thinker.born <= maxGrandparentYear
+                    );
+                    potentialGrandparents = [...potentialGrandparents, ...matchingThinkers];
+                }
+            });
+            
+            // If not enough found in exact range, expand slightly
+            if (potentialGrandparents.length < 5) {
+                interests.forEach(interest => {
+                    if (notableThinkers[interest]) {
+                        const additionalThinkers = notableThinkers[interest].filter(thinker => 
+                            (thinker.born >= minGrandparentYear - 10 && thinker.born < minGrandparentYear) || 
+                            (thinker.born > maxGrandparentYear && thinker.born <= maxGrandparentYear + 10)
+                        );
+                        potentialGrandparents = [...potentialGrandparents, ...additionalThinkers];
+                    }
+                });
+            }
+            
+            // Remove duplicates
+            potentialGrandparents = Array.from(new Set(potentialGrandparents.map(a => a.name)))
+                .map(name => {
+                    return potentialGrandparents.find(a => a.name === name)
+                });
+            
+            // Sort by closest to ideal 50-year gap
+            potentialGrandparents.sort((a, b) => {
+                return Math.abs(a.born - (birthYear - 50)) - Math.abs(b.born - (birthYear - 50));
+            });
+            
+            // Take up to 5
+            potentialGrandparents = potentialGrandparents.slice(0, 5);
+            
+            // Find historical era
+            let era = { name: "Unknown", context: "" };
+            for (const period of historicalEras) {
+                if (midGrandparentYear >= period.start && midGrandparentYear <= period.end) {
+                    era = period;
+                    break;
+                }
+            }
+            
+            // Update results in the DOM
+            document.getElementById('birth-year-result').textContent = birthYear;
+            document.getElementById('grandparent-years').textContent = `${minGrandparentYear}-${maxGrandparentYear}`;
+            
+            // Update the progress circle
+            const circle = document.querySelector('.circle-progress');
+            const radius = circle.getAttribute('r');
+            const circumference = 2 * Math.PI * radius;
+            circle.style.strokeDasharray = `${circumference} ${circumference}`;
+            circle.style.strokeDashoffset = `${circumference}`;
+            
+            // Populate grandparents list
+            const grandparentsList = document.getElementById('grandparents-list');
+            grandparentsList.innerHTML = '';
+            
+            potentialGrandparents.forEach(person => {
+                const element = document.createElement('div');
+                element.className = 'idea-grandparent';
+                
+                const lifespan = person.died ? `(${person.born}-${person.died})` : `(b. ${person.born})`;
+                const ageGap = birthYear - person.born;
+                
+                element.innerHTML = `
+                    <div class="idea-grandparent-name">${person.name} ${lifespan}</div>
+                    <div class="idea-grandparent-years">${ageGap} years older than you</div>
+                    <div class="idea-grandparent-description">${person.description}</div>
+                `;
+                
+                grandparentsList.appendChild(element);
+            });
+            
+            // Update stats
+            document.getElementById('era-value').textContent = era.name;
+            document.getElementById('era-context').textContent = era.context;
+            
+            document.getElementById('context-value').textContent = `${midGrandparentYear}s`;
+            document.getElementById('context-description').textContent = `Your idea grandparents came of age during a time of ${getContextDescription(midGrandparentYear)}.`;
+            
+            document.getElementById('time-gap').textContent = `50 Years`;
+            document.getElementById('time-comparison').textContent = `That's approximately 2 generations - enough distance for perspective, but close enough for relevance.`;
+            
+            const connectionScore = calculateConnectionScore(birthYear, potentialGrandparents);
+            document.getElementById('connection-value').textContent = `${connectionScore}%`;
+            document.getElementById('connection-explanation').textContent = getConnectionExplanation(connectionScore);
+            
+            // Update hidden fields for email form
+            document.getElementById('email-birth-year').value = birthYear;
+            document.getElementById('email-interests').value = interests.join(',');
+            document.getElementById('email-grandparents').value = potentialGrandparents.map(p => p.name).join(', ');
+            document.getElementById('email-challenges').value = document.getElementById('challenges').value;
+            
+            // Show results
+            surveyForm.style.display = 'none';
+            resultsDiv.style.display = 'block';
+            
+            // Animate the circle
+            setTimeout(() => {
+                const offset = circumference - (50 / 100) * circumference;
+                circle.style.strokeDashoffset = offset;
+            }, 100);
+        }
+        
+        // Helper functions
+        function calculateConnectionScore(birthYear, potentialGrandparents) {
+            if (potentialGrandparents.length === 0) return 0;
+            
+            // Calculate average proximity to ideal 50-year gap
+            const idealGap = 50;
+            const totalProximity = potentialGrandparents.reduce((sum, person) => {
+                const actualGap = birthYear - person.born;
+                const proximity = 100 - Math.min(Math.abs(actualGap - idealGap) * 2, 100);
+                return sum + proximity;
+            }, 0);
+            
+            return Math.round(totalProximity / potentialGrandparents.length);
+        }
+        
+        function getContextDescription(year) {
+            if (year < 1920) return "global conflict and progressive social reform";
+            if (year < 1930) return "post-war prosperity and cultural experimentation";
+            if (year < 1940) return "economic hardship and political transformation";
+            if (year < 1950) return "global conflict and early atomic age developments";
+            if (year < 1960) return "post-war prosperity and Cold War tensions";
+            if (year < 1970) return "social upheaval, civil rights, and space exploration";
+            if (year < 1980) return "cultural change, technological advancement, and political tension";
+            if (year < 1990) return "Cold War politics, early computing, and economic shifts";
+            if (year < 2000) return "digital revolution and post-Cold War globalization";
+            return "early internet culture and post-millennium anxiety";
+        }
+        
+        function getConnectionExplanation(score) {
+            if (score >= 90) return "Exceptional match with idea grandparents who lived almost exactly 5 decades before you.";
+            if (score >= 75) return "Strong connection potential with thinkers from approximately 5 decades prior.";
+            if (score >= 50) return "Good connection with thinkers close to the five decade mark.";
+            if (score >= 25) return "Moderate connection with thinkers around the five decade range.";
+            return "Limited connection with ideal five-decade grandparents, but still valuable insights available.";
+        }
+            
