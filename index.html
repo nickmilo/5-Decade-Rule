@@ -179,6 +179,24 @@
         
         .idea-grandparent-description {
             margin-top: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .idea-grandparent-match {
+            display: inline-block;
+            background-color: #2ecc71;
+            color: white;
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-top: 5px;
+        }
+        
+        .match-reason {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+            font-style: italic;
         }
         
         .stats-container {
@@ -261,6 +279,56 @@
         .cta-link:hover {
             text-decoration: underline;
         }
+        
+        /* New styles for learning style question */
+        .learning-style-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .learning-style-option {
+            background-color: #f1f1f1;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            flex: 1 1 45%;
+            min-width: 200px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .learning-style-option:hover {
+            background-color: #e8f4fd;
+            border-color: #3498db;
+        }
+        
+        .learning-style-option.selected {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .learning-style-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background-color: #eee;
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-indicator {
+            height: 100%;
+            background-color: #3498db;
+            width: 0%;
+            transition: width 0.3s;
+        }
     </style>
 </head>
 <body>
@@ -272,6 +340,10 @@
         
         <div id="survey-form">
             <p>The Five Decade Rule suggests that we can gain unique insights from thinkers and doers born approximately 50 years before us. These are our "idea grandparents" - not of blood, but of thought.</p>
+            
+            <div class="progress-bar">
+                <div id="progress-indicator" class="progress-indicator" style="width: 0%"></div>
+            </div>
             
             <h2>Find Your Idea Grandparents</h2>
             
@@ -291,8 +363,32 @@
                     <div class="interest-tag" onclick="toggleInterest(this)" data-interest="psychology">Psychology</div>
                     <div class="interest-tag" onclick="toggleInterest(this)" data-interest="history">History & Politics</div>
                     <div class="interest-tag" onclick="toggleInterest(this)" data-interest="spirituality">Spirituality</div>
+                    <div class="interest-tag" onclick="toggleInterest(this)" data-interest="knowledge_management">Knowledge Management</div>
                 </div>
                 <input type="hidden" id="selected-interests" value="">
+            </div>
+            
+            <div class="form-group">
+                <label for="learning-style">How do you prefer to engage with new ideas?</label>
+                <div class="learning-style-options">
+                    <div class="learning-style-option" onclick="selectLearningStyle(this)" data-style="analytical">
+                        <div class="learning-style-title">Analytical/Theoretical</div>
+                        <div>I prefer systematic analysis and theoretical frameworks</div>
+                    </div>
+                    <div class="learning-style-option" onclick="selectLearningStyle(this)" data-style="practical">
+                        <div class="learning-style-title">Practical/Experiential</div>
+                        <div>I learn best through hands-on experience and practical application</div>
+                    </div>
+                    <div class="learning-style-option" onclick="selectLearningStyle(this)" data-style="intuitive">
+                        <div class="learning-style-title">Intuitive/Creative</div>
+                        <div>I follow intuition and creative insight in my thinking</div>
+                    </div>
+                    <div class="learning-style-option" onclick="selectLearningStyle(this)" data-style="social">
+                        <div class="learning-style-title">Social/Collaborative</div>
+                        <div>I develop ideas through dialogue and engagement with others</div>
+                    </div>
+                </div>
+                <input type="hidden" id="selected-learning-style" value="">
             </div>
             
             <div class="form-group">
@@ -364,8 +460,8 @@
                 <form id="email-form" action="https://formspree.io/f/xgvkvboy" method="POST">
                     <input type="hidden" name="birth_year" id="email-birth-year">
                     <input type="hidden" name="interests" id="email-interests">
+                    <input type="hidden" name="learning_style" id="email-learning-style">
                     <input type="hidden" name="grandparents" id="email-grandparents">
-                    <input type="hidden" name="challenges" id="email-challenges">
                     
                     <div class="form-group">
                         <input type="email" name="email" placeholder="Your email address" required>
@@ -373,6 +469,8 @@
                     <button type="submit">Send Me My Analysis</button>
                 </form>
             </div>
+            
+            <button type="button" onclick="resetSurvey()" style="margin-top: 20px;">Start Over</button>
         </div>
         
         <footer>
@@ -382,9 +480,20 @@
     </div>
     
     <script>
+        // Common words to filter out in keyword analysis
+        const commonWords = [
+          "the", "and", "that", "have", "for", "not", "with", "you", "this", "but", "his", 
+          "from", "they", "will", "would", "there", "their", "what", "about", "which", 
+          "when", "make", "like", "time", "just", "know", "take", "people", "into", "year", 
+          "your", "good", "some", "could", "them", "other", "than", "then", "look", "only", 
+          "come", "over", "think", "also", "back", "after", "work", "first", "well", "even", 
+          "want", "because", "these", "give", "most"
+        ];
+        
         // Database of notable thinkers and their birth years, categorized by interest
         const notableThinkers = {
             science: [
+                // Existing entries
                 { name: "Carl Sagan", born: 1934, died: 1996, description: "Astronomer, cosmologist, and science communicator known for making complex scientific ideas accessible to the public." },
                 { name: "Richard Feynman", born: 1918, died: 1988, description: "Theoretical physicist known for his work in quantum mechanics and particle physics, as well as his engaging teaching style." },
                 { name: "Jane Goodall", born: 1934, description: "Primatologist and anthropologist known for her groundbreaking studies of chimpanzees in Tanzania." },
@@ -392,56 +501,193 @@
                 { name: "Jonas Salk", born: 1914, died: 1995, description: "Medical researcher who developed the first successful polio vaccine." },
                 { name: "Albert Einstein", born: 1879, died: 1955, description: "Theoretical physicist who developed the theory of relativity and made significant contributions to quantum mechanics." },
                 { name: "Marie Curie", born: 1867, died: 1934, description: "Physicist and chemist who conducted pioneering research on radioactivity and discovered the elements polonium and radium." },
-                { name: "Stephen Hawking", born: 1942, died: 2018, description: "Theoretical physicist known for his work on black holes and relativity, and for making science accessible to the public." }
+                { name: "Stephen Hawking", born: 1942, died: 2018, description: "Theoretical physicist known for his work on black holes and relativity, and for making science accessible to the public." },
+                
+                // New entries
+                { name: "Rosalind Franklin", born: 1920, died: 1958, description: "Chemist whose X-ray crystallography work was crucial to understanding DNA structure, though her contributions were largely unrecognized during her lifetime." },
+                { name: "Nikola Tesla", born: 1856, died: 1943, description: "Inventor and electrical engineer who developed the alternating current electricity supply system and made numerous contributions to electromagnetism." },
+                { name: "Barbara McClintock", born: 1902, died: 1992, description: "Geneticist who discovered genetic transposition and won the Nobel Prize for her work on 'jumping genes' and genetic regulation." },
+                { name: "Linus Pauling", born: 1901, died: 1994, description: "Chemist, biochemist, and peace activist who made important discoveries in quantum chemistry and molecular biology, and is the only person to win two unshared Nobel Prizes." },
+                { name: "E.O. Wilson", born: 1929, died: 2021, description: "Biologist known as the world's leading expert on ants and for his work on biodiversity conservation." },
+                { name: "James Lovelock", born: 1919, died: 2022, description: "Scientist and environmentalist who proposed the Gaia hypothesis, suggesting Earth functions as a self-regulating system." },
+                { name: "David Attenborough", born: 1926, description: "Broadcaster and natural historian who has created numerous groundbreaking wildlife documentaries and is a passionate advocate for environmental conservation." },
+                { name: "Francis Crick", born: 1916, died: 2004, description: "Molecular biologist who co-discovered the structure of the DNA molecule and developed the central dogma of molecular biology." },
+                { name: "Lynn Margulis", born: 1938, died: 2011, description: "Evolutionary theorist who developed the endosymbiotic theory of cell evolution and made significant contributions to the Gaia hypothesis." },
+                { name: "Richard Dawkins", born: 1941, description: "Evolutionary biologist and author who popularized gene-centered view of evolution and introduced the concept of memes." },
+                { name: "George Washington Carver", born: 1864, died: 1943, description: "Agricultural scientist and inventor who developed hundreds of products using peanuts, sweet potatoes, and other crops." },
+                { name: "Vera Rubin", born: 1928, died: 2016, description: "Astronomer who discovered evidence for dark matter through her pioneering work on galaxy rotation rates." },
+                { name: "Sylvia Earle", born: 1935, description: "Marine biologist, explorer, and oceanographer known for her deep-sea research and ocean conservation efforts." },
+                { name: "James Hansen", born: 1941, description: "Climate scientist who brought global warming to the world's attention through his testimony to Congress in 1988." }
             ],
+            
             philosophy: [
+                // Existing entries
                 { name: "Hannah Arendt", born: 1906, died: 1975, description: "Political philosopher known for her work on totalitarianism, political theory, and the nature of power and authority." },
                 { name: "Jean-Paul Sartre", born: 1905, died: 1980, description: "Existentialist philosopher, playwright, and novelist who emphasized individual existence, freedom, and choice." },
                 { name: "Simone de Beauvoir", born: 1908, died: 1986, description: "Existentialist philosopher, writer, and social theorist known for her treatise 'The Second Sex'." },
                 { name: "Ludwig Wittgenstein", born: 1889, died: 1951, description: "Philosopher who worked primarily in logic, philosophy of mathematics, philosophy of mind, and philosophy of language." },
                 { name: "Karl Popper", born: 1902, died: 1994, description: "Philosopher of science known for his rejection of the classical inductivist views on the scientific method." },
-                { name: "Bertrand Russell", born: 1872, died: 1970, description: "Philosopher, logician, mathematician, and social critic known for his work in analytic philosophy." }
+                { name: "Bertrand Russell", born: 1872, died: 1970, description: "Philosopher, logician, mathematician, and social critic known for his work in analytic philosophy." },
+                
+                // New entries
+                { name: "Albert Camus", born: 1913, died: 1960, description: "Philosopher, author, and journalist who developed the concept of absurdism and explored themes of existentialism in his literary works." },
+                { name: "Martha Nussbaum", born: 1947, description: "Philosopher who has contributed significantly to ethics, political philosophy, and theories of human development." },
+                { name: "Jürgen Habermas", born: 1929, description: "Social theorist and philosopher known for his work on communicative rationality and the public sphere." },
+                { name: "John Rawls", born: 1921, died: 2002, description: "Political philosopher who articulated the theory of justice as fairness and greatly influenced liberal political thought." },
+                { name: "Michel Foucault", born: 1926, died: 1984, description: "Philosopher and social theorist who explored the relationship between power, knowledge, and discourse." },
+                { name: "Iris Murdoch", born: 1919, died: 1999, description: "Philosopher and novelist who wrote extensively on moral philosophy, particularly the concept of goodness and virtue ethics." },
+                { name: "Richard Rorty", born: 1931, died: 2007, description: "Philosopher known for his pragmatism and critique of the correspondence theory of truth." },
+                { name: "Thomas Kuhn", born: 1922, died: 1996, description: "Philosopher of science who developed the concept of paradigm shifts in scientific revolutions." },
+                { name: "Peter Singer", born: 1946, description: "Moral philosopher known for his work on effective altruism, bioethics, and animal rights." },
+                { name: "Judith Butler", born: 1956, description: "Philosopher and gender theorist who challenged conventional notions of gender identity." },
+                { name: "Emmanuel Levinas", born: 1906, died: 1995, description: "Philosopher known for his work on ethics as first philosophy and the philosophy of the Other." },
+                { name: "Derek Parfit", born: 1942, died: 2017, description: "Philosopher who made significant contributions to personal identity theory and population ethics." }
             ],
+            
             art: [
+                // Existing entries
                 { name: "Frida Kahlo", born: 1907, died: 1954, description: "Painter known for her self-portraits and works inspired by nature and Mexican culture." },
                 { name: "Georgia O'Keeffe", born: 1887, died: 1986, description: "Painter known for her flowers, New York skyscrapers, and New Mexico landscapes." },
                 { name: "James Baldwin", born: 1924, died: 1987, description: "Writer and social critic known for his essays on the Black experience in America." },
                 { name: "Pablo Picasso", born: 1881, died: 1973, description: "Revolutionary artist who co-founded Cubism and created over 20,000 works across various mediums." },
                 { name: "Virginia Woolf", born: 1882, died: 1941, description: "Modernist writer known for her use of stream of consciousness as a narrative device." },
-                { name: "Gabriel García Márquez", born: 1927, died: 2014, description: "Author known for popularizing magical realism and his novel 'One Hundred Years of Solitude'." }
+                { name: "Gabriel García Márquez", born: 1927, died: 2014, description: "Author known for popularizing magical realism and his novel 'One Hundred Years of Solitude'." },
+                
+                // New entries
+                { name: "Toni Morrison", born: 1931, died: 2019, description: "Novelist whose work explored the Black American experience, winning her the Nobel Prize in Literature." },
+                { name: "Andy Warhol", born: 1928, died: 1987, description: "Artist and filmmaker who was a leading figure in the visual art movement known as pop art." },
+                { name: "Ursula K. Le Guin", born: 1929, died: 2018, description: "Science fiction and fantasy author who explored themes of sociology, anthropology, and environmentalism in her work." },
+                { name: "Louise Bourgeois", born: 1911, died: 2010, description: "Sculptor and installation artist known for her large-scale sculptures and installations exploring themes of childhood trauma and anxiety." },
+                { name: "Jorge Luis Borges", born: 1899, died: 1986, description: "Writer whose works blended reality and fantasy, incorporating philosophical and metaphysical elements." },
+                { name: "Maya Angelou", born: 1928, died: 2014, description: "Poet, memoirist, and civil rights activist whose works explored themes of identity, family, and racism." },
+                { name: "Diane Arbus", born: 1923, died: 1971, description: "Photographer known for her portraits of people on the margins of society, challenging conventional notions of beauty and normality." },
+                { name: "Jean-Michel Basquiat", born: 1960, died: 1988, description: "Artist who rose from the New York City graffiti scene to become an internationally acclaimed neo-expressionist artist." },
+                { name: "Susan Sontag", born: 1933, died: 2004, description: "Writer, filmmaker, and political activist known for her essays on modern culture, particularly 'On Photography' and 'Notes on Camp'." },
+                { name: "Leonard Cohen", born: 1934, died: 2016, description: "Singer-songwriter, poet, and novelist whose work explored themes of religion, politics, isolation, and personal relationships." },
+                { name: "Zora Neale Hurston", born: 1891, died: 1960, description: "Writer and anthropologist known for her portrayal of racial struggles in the early-20th-century American South." },
+                { name: "Wassily Kandinsky", born: 1866, died: 1944, description: "Painter credited with creating the first purely abstract paintings and developing theories on the spiritual aspects of art." }
             ],
+            
             business: [
+                // Existing entries
                 { name: "Peter Drucker", born: 1909, died: 2005, description: "Management consultant and author, known as the founder of modern management." },
                 { name: "W. Edwards Deming", born: 1900, died: 1993, description: "Engineer and statistician known for his work in quality control and management." },
                 { name: "Ray Kroc", born: 1902, died: 1984, description: "Businessman who turned McDonald's into a global franchise and revolutionized the fast food industry." },
                 { name: "Walt Disney", born: 1901, died: 1966, description: "Entrepreneur, animator, and film producer who pioneered the American animation industry." },
-                { name: "Warren Buffett", born: 1930, description: "Investor and business tycoon, known as the 'Oracle of Omaha' for his investment philosophy." }
+                { name: "Warren Buffett", born: 1930, description: "Investor and business tycoon, known as the 'Oracle of Omaha' for his investment philosophy." },
+                
+                // New entries
+                { name: "Estée Lauder", born: 1908, died: 2004, description: "Entrepreneur who co-founded the cosmetics company Estée Lauder and pioneered marketing techniques in the beauty industry." },
+                { name: "John D. Rockefeller", born: 1839, died: 1937, description: "Business magnate and philanthropist who founded the Standard Oil Company and became one of the world's richest men." },
+                { name: "Coco Chanel", born: 1883, died: 1971, description: "Fashion designer and businesswoman who founded the Chanel brand and revolutionized women's fashion." },
+                { name: "Andrew Carnegie", born: 1835, died: 1919, description: "Industrialist and philanthropist who led the expansion of the American steel industry and became one of the richest Americans ever." },
+                { name: "Henry Ford", born: 1863, died: 1947, description: "Industrialist who revolutionized factory production with the assembly line and founded the Ford Motor Company." },
+                { name: "Sam Walton", born: 1918, died: 1992, description: "Entrepreneur who founded Walmart and Sam's Club, transforming retail through his discount store chain." },
+                { name: "Mary Kay Ash", born: 1918, died: 2001, description: "Entrepreneur who founded Mary Kay Cosmetics and created new opportunities for women in business." },
+                { name: "Milton Friedman", born: 1912, died: 2006, description: "Economist who advocated free-market capitalism and influenced business and economic policy globally." },
+                { name: "George Eastman", born: 1854, died: 1932, description: "Entrepreneur who founded Kodak and transformed photography into a widespread consumer activity." },
+                { name: "Madam C.J. Walker", born: 1867, died: 1919, description: "Entrepreneur and philanthropist who created specialized hair products for African American women and became one of America's first female self-made millionaires." }
             ],
+            
             technology: [
+                // Existing entries
                 { name: "Alan Turing", born: 1912, died: 1954, description: "Mathematician, computer scientist, and cryptanalyst who is considered the father of theoretical computer science." },
                 { name: "Grace Hopper", born: 1906, died: 1992, description: "Computer scientist and Navy rear admiral who was a pioneer of computer programming." },
                 { name: "Claude Shannon", born: 1916, died: 2001, description: "Mathematician and electrical engineer known as 'the father of information theory'." },
                 { name: "John von Neumann", born: 1903, died: 1957, description: "Mathematician and physicist who made major contributions to numerous fields, including computer science." },
-                { name: "Douglas Engelbart", born: 1925, died: 2013, description: "Engineer and inventor known for his work on human-computer interaction and the invention of the computer mouse." }
+                { name: "Douglas Engelbart", born: 1925, died: 2013, description: "Engineer and inventor known for his work on human-computer interaction and the invention of the computer mouse." },
+                
+                // New entries
+                { name: "Ada Lovelace", born: 1815, died: 1852, description: "Mathematician and writer who is often regarded as the first computer programmer for her work on Charles Babbage's Analytical Engine." },
+                { name: "Tim Berners-Lee", born: 1955, description: "Computer scientist who invented the World Wide Web, revolutionizing how information is shared and created on the Internet." },
+                { name: "Margaret Hamilton", born: 1936, description: "Computer scientist who developed the on-board flight software for NASA's Apollo missions and pioneered software engineering." },
+                { name: "Steve Wozniak", born: 1950, description: "Electronics engineer and programmer who co-founded Apple Computer and designed the Apple I and Apple II computers." },
+                { name: "Seymour Cray", born: 1925, died: 1996, description: "Electrical engineer and supercomputer architect who designed many of the world's fastest computers." },
+                { name: "Gordon Moore", born: 1929, died: 2023, description: "Co-founder of Intel and author of Moore's Law, which predicted the doubling of transistors on integrated circuits every two years." },
+                { name: "Vannevar Bush", born: 1890, died: 1974, description: "Engineer and inventor who conceptualized the memex, a hypothetical proto-hypertext system that influenced the development of the internet." },
+                { name: "J.C.R. Licklider", born: 1915, died: 1990, description: "Computer scientist who envisioned a global computer network long before the internet was developed." },
+                { name: "Katherine Johnson", born: 1918, died: 2020, description: "Mathematician whose calculations were critical to the success of NASA's first crewed spaceflights." },
+                { name: "Hedy Lamarr", born: 1914, died: 2000, description: "Actress and inventor who co-developed an early form of frequency hopping, which laid the foundation for WiFi, Bluetooth, and GPS technologies." },
+                { name: "Robert Noyce", born: 1927, died: 1990, description: "Co-founder of Intel and co-inventor of the integrated circuit, a key component in all modern computers." }
             ],
+            
             psychology: [
+                // Existing entries
                 { name: "Carl Jung", born: 1875, died: 1961, description: "Psychiatrist and psychoanalyst who founded analytical psychology and introduced concepts like the collective unconscious." },
                 { name: "B.F. Skinner", born: 1904, died: 1990, description: "Psychologist and behaviorist who developed the theory of operant conditioning." },
                 { name: "Viktor Frankl", born: 1905, died: 1997, description: "Psychiatrist and Holocaust survivor who founded logotherapy, focusing on the search for meaning in life." },
                 { name: "Jean Piaget", born: 1896, died: 1980, description: "Psychologist known for his work on child development and cognitive theory." },
-                { name: "Mihaly Csikszentmihalyi", born: 1934, died: 2021, description: "Psychologist who recognized and named the psychological concept of 'flow' - the state of complete immersion in an activity." }
+                { name: "Mihaly Csikszentmihalyi", born: 1934, died: 2021, description: "Psychologist who recognized and named the psychological concept of 'flow' - the state of complete immersion in an activity." },
+                
+                // New entries
+                { name: "Sigmund Freud", born: 1856, died: 1939, description: "Neurologist who founded psychoanalysis and developed influential theories about the unconscious mind." },
+                { name: "Abraham Maslow", born: 1908, died: 1970, description: "Psychologist who created the hierarchy of needs theory and helped develop humanistic psychology." },
+                { name: "Mary Ainsworth", born: 1913, died: 1999, description: "Developmental psychologist known for her work on attachment theory and the Strange Situation experiment." },
+                { name: "Albert Bandura", born: 1925, died: 2021, description: "Psychologist known for his social cognitive theory and the Bobo doll experiment on observational learning." },
+                { name: "Erik Erikson", born: 1902, died: 1994, description: "Developmental psychologist known for his theory on the eight stages of psychosocial development." },
+                { name: "Karen Horney", born: 1885, died: 1952, description: "Psychoanalyst who challenged some of Freud's theories and emphasized the impact of social and cultural conditions on psychology." },
+                { name: "William James", born: 1842, died: 1910, description: "Philosopher and psychologist who was instrumental in establishing psychology as a science and developed the philosophy of pragmatism." },
+                { name: "Elisabeth Kübler-Ross", born: 1926, died: 2004, description: "Psychiatrist who pioneed research on death and dying, developing the five stages of grief model." },
+                { name: "Daniel Kahneman", born: 1934, description: "Psychologist who won the Nobel Prize in Economics for his work on the psychology of judgment, decision-making, and behavioral economics." },
+                { name: "Martin Seligman", born: 1942, description: "Psychologist who developed the theory of learned helplessness and later became a founder of positive psychology." },
+                { name: "Carol Gilligan", born: 1936, description: "Feminist ethicist and psychologist known for her work on moral development theory and ethical relationships." }
             ],
+            
             history: [
+                // Existing entries
                 { name: "Howard Zinn", born: 1922, died: 2010, description: "Historian and political scientist known for 'A People's History of the United States'." },
                 { name: "Margaret Mead", born: 1901, died: 1978, description: "Cultural anthropologist known for her studies of social attitudes and child-rearing practices." },
                 { name: "Noam Chomsky", born: 1928, description: "Linguist, philosopher, and political activist known for his work in linguistics and his critique of U.S. foreign policy." },
-                { name: "Eric Hobsbawm", born: 1917, died: 2012, description: "Historian known for his work on the rise of industrial capitalism, socialism, and nationalism." }
+                { name: "Eric Hobsbawm", born: 1917, died: 2012, description: "Historian known for his work on the rise of industrial capitalism, socialism, and nationalism." },
+                
+                // New entries
+                { name: "Doris Kearns Goodwin", born: 1943, description: "Historian and biographer who has written extensively on American presidents and political leadership." },
+                { name: "Stephen Ambrose", born: 1936, died: 2002, description: "Historian and biographer known for his books on World War II and American political history." },
+                { name: "Barbara Tuchman", born: 1912, died: 1989, description: "Historian and author who twice won the Pulitzer Prize for her works on historical events." },
+                { name: "Fernand Braudel", born: 1902, died: 1985, description: "Historian who revolutionized the study of history by considering long-term historical structures over events." },
+                { name: "Simon Schama", born: 1945, description: "Historian and art historian known for his narratives of historical events and art history documentaries." },
+                { name: "Mary Beard", born: 1955, description: "Classicist and historian specializing in ancient Roman history and women in the ancient world." },
+                { name: "Ken Burns", born: 1953, description: "Documentary filmmaker whose work on American history has significantly shaped public understanding of historical events." },
+                { name: "Jared Diamond", born: 1937, description: "Historian and geographer known for examining the environmental and geographical factors that shape civilizations." },
+                { name: "Henry Louis Gates Jr.", born: 1950, description: "Historian, literary critic, and filmmaker who has researched and documented African American history and genealogy." },
+                { name: "Yuval Noah Harari", born: 1976, description: "Historian and author known for his books on human evolution, history, and future prospects." }
             ],
+            
             spirituality: [
+                // Existing entries
                 { name: "Thomas Merton", born: 1915, died: 1968, description: "Catholic writer, theologian, and mystic known for his exploration of interfaith understanding." },
                 { name: "Thich Nhat Hanh", born: 1926, died: 2022, description: "Buddhist monk, peace activist, and author known for promoting mindfulness and engaged Buddhism." },
                 { name: "Ram Dass", born: 1931, died: 2019, description: "Spiritual teacher and author known for exploring Hindu spirituality and consciousness." },
-                { name: "Alan Watts", born: 1915, died: 1973, description: "Philosopher known for popularizing Eastern philosophy for Western audiences." }
+                { name: "Alan Watts", born: 1915, died: 1973, description: "Philosopher known for popularizing Eastern philosophy for Western audiences." },
+                
+                // New entries
+                { name: "Dalai Lama", born: 1935, description: "Spiritual leader of Tibetan Buddhism known for his teachings on compassion, peace, and mindfulness." },
+                { name: "Joseph Campbell", born: 1904, died: 1987, description: "Mythologist and writer who explored the universal themes in world mythologies and religions." },
+                { name: "Pierre Teilhard de Chardin", born: 1881, died: 1955, description: "Jesuit priest, philosopher, and paleontologist who developed the concept of the Omega Point and Noosphere." },
+                { name: "Karen Armstrong", born: 1944, description: "Religious scholar who has written extensively on comparative religion and the common themes across religious traditions." },
+                { name: "Huston Smith", born: 1919, died: 2016, description: "Religious studies scholar who authored 'The World's Religions' and explored the world's spiritual traditions." },
+                { name: "Pema Chödrön", born: 1936, description: "Buddhist teacher and author known for her accessible teachings on meditation and compassion." },
+                { name: "Thomas Berry", born: 1914, died: 2009, description: "Cultural historian and eco-theologian who developed the 'Universe Story' and advocated for Earth-centered spirituality." },
+                { name: "Matthew Fox", born: 1940, description: "Spiritual theologian and Episcopal priest who developed creation spirituality, integrating mysticism with social justice." },
+                { name: "Eckhart Tolle", born: 1948, description: "Spiritual teacher known for his books on mindfulness and spiritual awakening, particularly 'The Power of Now'." },
+                { name: "Paramahansa Yogananda", born: 1893, died: 1952, description: "Yogi and guru who introduced millions of westerners to meditation and yoga through his book 'Autobiography of a Yogi'." },
+                { name: "Sri Aurobindo", born: 1872, died: 1950, description: "Philosopher, poet, and yoga guru who developed Integral Yoga and wrote on human evolution and consciousness." }
+            ],
+            
+            // New category: Knowledge Management
+            knowledge_management: [
+                { name: "Vannevar Bush", born: 1890, died: 1974, description: "Engineer who conceptualized the memex, an early vision of hypertext that influenced knowledge management systems." },
+                { name: "Ted Nelson", born: 1937, description: "Pioneer of information technology who coined the terms 'hypertext' and 'hypermedia' and created Project Xanadu." },
+                { name: "Doug Engelbart", born: 1925, died: 2013, description: "Inventor and pioneer in human-computer interaction who developed collaborative knowledge work tools and the NLS (oN-Line System)." },
+                { name: "Tim Berners-Lee", born: 1955, description: "Inventor of the World Wide Web who created HTML and the foundational architecture for sharing knowledge globally." },
+                { name: "Ikujiro Nonaka", born: 1935, description: "Organizational theorist who developed the SECI model of knowledge creation and the concept of Ba in knowledge management." },
+                { name: "Peter Drucker", born: 1909, died: 2005, description: "Management consultant who coined the term 'knowledge worker' and predicted the importance of knowledge management." },
+                { name: "Niklas Luhmann", born: 1927, died: 1998, description: "Sociologist who developed a prolific Zettelkasten (slip-box) system containing over 90,000 index cards for knowledge management." },
+                { name: "Claude Shannon", born: 1916, died: 2001, description: "Mathematician who developed information theory, establishing the foundation for digital communication and knowledge systems." },
+                { name: "Etienne Wenger", born: 1952, description: "Educational theorist who developed the concept of 'communities of practice' for knowledge sharing in organizations." },
+                { name: "Thomas Davenport", born: 1954, description: "Management consultant who pioneered formal knowledge management practices in organizations." },
+                { name: "David Allen", born: 1945, description: "Productivity consultant who developed the Getting Things Done (GTD) methodology for personal knowledge and task management." },
+                { name: "Sönke Ahrens", born: 1976, description: "Author of 'How to Take Smart Notes' who popularized the Zettelkasten method for academic and personal knowledge management." }
             ]
         };
         
@@ -459,6 +705,20 @@
             { start: 2002, end: 2020, name: "Post-9/11/Digital Era", context: "A period marked by global terrorism concerns, economic fluctuations, and digital transformation." }
         ];
         
+        // Define the major themes we want to detect
+        const themeKeywords = {
+          "innovation": ["new", "create", "invent", "discover", "pioneer", "novel", "revolutionary", "breakthrough", "innovative"],
+          "analysis": ["understand", "examine", "research", "analyze", "study", "investigate", "explore", "observation", "inquiry"],
+          "philosophy": ["meaning", "purpose", "ethics", "values", "question", "philosophy", "moral", "ethical", "logical"],
+          "systems": ["structure", "system", "pattern", "framework", "model", "organization", "design", "architecture", "systematic"],
+          "communication": ["communicate", "share", "teach", "express", "articulate", "dialogue", "language", "convey", "explain"],
+          "social_change": ["society", "political", "revolution", "movement", "activism", "change", "reform", "justice", "rights"],
+          "creativity": ["creative", "art", "imagination", "expression", "inspiration", "artistic", "craft", "create", "design"],
+          "nature": ["natural", "environment", "ecology", "earth", "nature", "biological", "planet", "conservation", "organism"],
+          "consciousness": ["mind", "awareness", "conscious", "perception", "meditation", "mindful", "spiritual", "experience", "cognition"],
+          "practical": ["practical", "apply", "implement", "solution", "process", "method", "technique", "tool", "practice"]
+        };
+        
         // Function to toggle interest selection
         function toggleInterest(element) {
             const selectedInterests = document.querySelectorAll('.interest-tag.selected');
@@ -473,6 +733,244 @@
             const selected = Array.from(document.querySelectorAll('.interest-tag.selected'))
                 .map(tag => tag.dataset.interest);
             document.getElementById('selected-interests').value = selected.join(',');
+            
+            // Update progress
+            updateProgress();
+        }
+        
+        // Function to select learning style
+        function selectLearningStyle(element) {
+            // Remove selected class from all options
+            document.querySelectorAll('.learning-style-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked option
+            element.classList.add('selected');
+            
+            // Update hidden input
+            document.getElementById('selected-learning-style').value = element.dataset.style;
+            
+            // Update progress
+            updateProgress();
+        }
+        
+        // Function to update progress indicator
+        function updateProgress() {
+            const birthYear = document.getElementById('birth-year').value;
+            const interests = document.getElementById('selected-interests').value;
+            const learningStyle = document.getElementById('selected-learning-style').value;
+            
+            let progress = 0;
+            
+            if (birthYear) progress += 25;
+            if (interests) progress += 25;
+            if (learningStyle) progress += 25;
+            
+            // Add some progress for text inputs (optional)
+            const currentInfluences = document.getElementById('current-influences').value;
+            const challenges = document.getElementById('challenges').value;
+            
+            if (currentInfluences || challenges) progress += 25;
+            
+            document.getElementById('progress-indicator').style.width = `${progress}%`;
+        }
+        
+        // Function to reset the survey
+        function resetSurvey() {
+            // Clear all inputs
+            document.getElementById('birth-year').value = '';
+            document.getElementById('selected-interests').value = '';
+            document.getElementById('selected-learning-style').value = '';
+            document.getElementById('current-influences').value = '';
+            document.getElementById('challenges').value = '';
+            
+            // Remove selected classes
+            document.querySelectorAll('.interest-tag.selected').forEach(tag => {
+                tag.classList.remove('selected');
+            });
+            
+            document.querySelectorAll('.learning-style-option.selected').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Hide results, show form
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('survey-form').style.display = 'block';
+            
+            // Reset progress
+            document.getElementById('progress-indicator').style.width = '0%';
+        }
+        
+        // Enhanced database with keywords and themes
+        function enhanceDatabase() {
+            // Define keywords for each category
+            const categoryKeywords = {
+                science: ["experiment", "observation", "theory", "evidence", "research", "discovery", "nature", "universe", "empirical", "hypothesis", "scientific"],
+                philosophy: ["meaning", "ethics", "logic", "reasoning", "existence", "knowledge", "metaphysics", "consciousness", "truth", "morality", "wisdom"],
+                art: ["creativity", "expression", "aesthetics", "beauty", "imagination", "creation", "culture", "emotion", "innovation", "perspective", "narrative"],
+                business: ["entrepreneurship", "management", "innovation", "strategy", "leadership", "value", "efficiency", "organization", "growth", "market", "economic"],
+                technology: ["innovation", "invention", "efficiency", "technical", "digital", "computer", "system", "design", "solution", "process", "machine"],
+                psychology: ["mind", "behavior", "cognitive", "emotional", "unconscious", "therapy", "development", "perception", "consciousness", "mental", "personality"],
+                history: ["past", "events", "culture", "society", "change", "movement", "influence", "revolution", "tradition", "chronicle", "civilization"],
+                spirituality: ["meaning", "purpose", "consciousness", "meditation", "awareness", "mindfulness", "practice", "belief", "tradition", "connection", "transcendence"],
+                knowledge_management: ["information", "organization", "system", "structure", "retrieval", "categorization", "connection", "framework", "method", "process", "network"]
+            };
+            
+            // Enhance each person with keywords and themes if not already done
+            Object.keys(notableThinkers).forEach(category => {
+                notableThinkers[category].forEach(person => {
+                    // Only enhance if not already done
+                    if (!person.keywords) {
+                        // Add category keywords
+                        person.keywords = [...categoryKeywords[category]];
+                        
+                        // Add name-based keywords
+                        person.keywords.push(person.name.toLowerCase());
+                        
+                        // Extract keywords from description
+                        const descriptionWords = person.description.toLowerCase()
+                            .replace(/[^\w\s]/g, '')
+                            .split(' ')
+                            .filter(word => word.length > 3)
+                            .filter(word => !commonWords.includes(word));
+                        
+                        // Add unique description keywords
+                        descriptionWords.forEach(word => {
+                            if (!person.keywords.includes(word)) {
+                                person.keywords.push(word);
+                            }
+                        });
+                        
+                        // Add themes based on description and category
+                        person.themes = detectThemes(person.description + " " + category);
+                    }
+                });
+            });
+        }
+        
+        // Detect themes in a text
+        function detectThemes(text) {
+            const lowercaseText = text.toLowerCase();
+            const themes = {};
+            
+            Object.keys(themeKeywords).forEach(theme => {
+                themes[theme] = 0;
+                themeKeywords[theme].forEach(keyword => {
+                    if (lowercaseText.includes(keyword)) {
+                        themes[theme]++;
+                    }
+                });
+            });
+            
+            return themes;
+        }
+        
+        // Extract keywords from user text
+        function analyzeUserText(text) {
+            // If text is empty or undefined, return empty array
+            if (!text) return [];
+            
+            // Break into words, remove punctuation, convert to lowercase
+            const words = text.toLowerCase()
+                .replace(/[^\w\s]/g, '')
+                .split(' ')
+                .filter(word => word.length > 3)
+                .filter(word => !commonWords.includes(word));
+            
+            // Count word frequency
+            const frequency = {};
+            words.forEach(word => {
+                frequency[word] = (frequency[word] || 0) + 1;
+            });
+            
+            // Sort by frequency
+            const sortedWords = Object.keys(frequency).sort((a, b) => frequency[b] - frequency[a]);
+            
+            return sortedWords;
+        }
+        
+        // Detect the sentiment of text
+        function analyzeSentiment(text) {
+            // If text is empty or undefined, return neutral sentiment
+            if (!text) return { overall: 0, positive: 0, negative: 0 };
+            
+            const positiveWords = [
+                "excited", "passionate", "hopeful", "inspired", "curious", 
+                "enjoy", "love", "happy", "interested", "fascinating",
+                "optimistic", "enthusiasm", "joy", "delighted", "thrilled"
+            ];
+            
+            const negativeWords = [
+                "frustrated", "confused", "struggling", "overwhelmed", "stuck",
+                "difficult", "challenging", "problem", "concern", "worry",
+                "anxious", "fear", "limited", "complicated", "hard"
+            ];
+            
+            const lowercaseText = text.toLowerCase();
+            
+            let positiveScore = 0;
+            let negativeScore = 0;
+            
+            positiveWords.forEach(word => {
+                if (lowercaseText.includes(word)) positiveScore++;
+            });
+            
+            negativeWords.forEach(word => {
+                if (lowercaseText.includes(word)) negativeScore++;
+            });
+            
+            return {
+                overall: positiveScore - negativeScore,
+                positive: positiveScore,
+                negative: negativeScore
+            };
+        }
+        
+        // Calculate similarity between two sets of keywords
+        function calculateKeywordSimilarity(userKeywords, personKeywords) {
+            // If either array is empty, return 0
+            if (!userKeywords || !userKeywords.length || !personKeywords || !personKeywords.length) {
+                return 0;
+            }
+            
+            let matchCount = 0;
+            
+            userKeywords.forEach(keyword => {
+                personKeywords.forEach(personKeyword => {
+                    // Exact match
+                    if (keyword === personKeyword) {
+                        matchCount += 2;
+                    }
+                    // Partial match (one is substring of the other)
+                    else if (keyword.includes(personKeyword) || personKeyword.includes(keyword)) {
+                        matchCount += 1;
+                    }
+                });
+            });
+            
+            // Normalize by the total possible matches (avoid division by zero)
+            return userKeywords.length > 0 ? matchCount / (userKeywords.length * 2) : 0;
+        }
+        
+        // Calculate theme similarity
+        function calculateThemeSimilarity(userThemes, personThemes) {
+            // If either object is empty, return 0
+            if (!userThemes || !personThemes) {
+                return 0;
+            }
+            
+            let similarity = 0;
+            let totalThemes = 0;
+            
+            Object.keys(userThemes).forEach(theme => {
+                if (userThemes[theme] > 0 && personThemes[theme] > 0) {
+                    similarity += Math.min(userThemes[theme], personThemes[theme]);
+                }
+                totalThemes += userThemes[theme];
+            });
+            
+            return totalThemes > 0 ? similarity / totalThemes : 0;
         }
         
         // Function to calculate and display results
@@ -490,14 +988,28 @@
                 alert('Please select at least one interest');
                 return;
             }
+            
+            const selectedLearningStyle = document.getElementById('selected-learning-style').value;
+            if (!selectedLearningStyle) {
+                alert('Please select your preferred learning style');
+                return;
+            }
+            
+            // Get all inputs
             const interests = selectedInterestsValue.split(',');
+            const learningStyle = selectedLearningStyle;
+            const currentInfluences = document.getElementById('current-influences').value;
+            const challenges = document.getElementById('challenges').value;
+            
+            // First, ensure the database is enhanced with keywords and themes
+            enhanceDatabase();
             
             // Calculate idea grandparent year range (45-55 years before birth)
             const minGrandparentYear = birthYear - 55;
             const maxGrandparentYear = birthYear - 45;
             const midGrandparentYear = birthYear - 50;
             
-            // Find matching grandparents
+            // Find matching grandparents by interests and birth year
             let potentialGrandparents = [];
             
             interests.forEach(interest => {
@@ -532,141 +1044,10 @@
                 return true;
             });
             
-            // Sort by closest to ideal 50-year gap
-            potentialGrandparents.sort((a, b) => {
-                return Math.abs(a.born - (birthYear - 50)) - Math.abs(b.born - (birthYear - 50));
-            });
-            
-            // Take up to 5
-            potentialGrandparents = potentialGrandparents.slice(0, 5);
-            
-            // Find historical era
-            let era = { name: "Unknown", context: "" };
-            for (const period of historicalEras) {
-                if (midGrandparentYear >= period.start && midGrandparentYear <= period.end) {
-                    era = period;
-                    break;
-                }
-            }
-            
-            // Update results in the DOM
-            document.getElementById('birth-year-result').textContent = birthYear;
-            document.getElementById('grandparent-years').textContent = `${minGrandparentYear}-${maxGrandparentYear}`;
-            
-            // Update the progress circle
-            const circle = document.querySelector('.circle-progress');
-            const radius = circle.getAttribute('r');
-            const circumference = 2 * Math.PI * radius;
-            circle.style.strokeDasharray = `${circumference} ${circumference}`;
-            circle.style.strokeDashoffset = `${circumference}`;
-            
-            // Populate grandparents list
-            const grandparentsList = document.getElementById('grandparents-list');
-            grandparentsList.innerHTML = '';
-            
-            if (potentialGrandparents.length === 0) {
-                grandparentsList.innerHTML = '<p>No matching idea grandparents found in our database for your selected interests and birth year range. Try selecting different interests or contact us for a personalized recommendation.</p>';
-            } else {
-                potentialGrandparents.forEach(person => {
-                    const element = document.createElement('div');
-                    element.className = 'idea-grandparent';
-                    
-                    const lifespan = person.died ? `(${person.born}-${person.died})` : `(b. ${person.born})`;
-                    const ageGap = birthYear - person.born;
-                    
-                    element.innerHTML = `
-                        <div class="idea-grandparent-name">${person.name} ${lifespan}</div>
-                        <div class="idea-grandparent-years">${ageGap} years older than you</div>
-                        <div class="idea-grandparent-description">${person.description}</div>
-                    `;
-                    
-                    grandparentsList.appendChild(element);
-                });
-            }
-            
-            // Update stats
-            document.getElementById('era-value').textContent = era.name;
-            document.getElementById('era-context').textContent = era.context;
-            
-            document.getElementById('context-value').textContent = `${midGrandparentYear}s`;
-            document.getElementById('context-description').textContent = `Your idea grandparents came of age during a time of ${getContextDescription(midGrandparentYear)}.`;
-            
-            document.getElementById('time-gap').textContent = `50 Years`;
-            document.getElementById('time-comparison').textContent = `That's approximately 2 generations - enough distance for perspective, but close enough for relevance.`;
-            
-            const connectionScore = calculateConnectionScore(birthYear, potentialGrandparents);
-            document.getElementById('connection-value').textContent = `${connectionScore}%`;
-            document.getElementById('connection-explanation').textContent = getConnectionExplanation(connectionScore);
-            
-            // Update hidden fields for email form
-            document.getElementById('email-birth-year').value = birthYear;
-            document.getElementById('email-interests').value = interests.join(',');
-            document.getElementById('email-grandparents').value = potentialGrandparents.map(p => p.name).join(', ');
-            document.getElementById('email-challenges').value = document.getElementById('challenges').value;
-            
-            // Show results
-            document.getElementById('survey-form').style.display = 'none';
-            document.getElementById('results').style.display = 'block';
-            
-            // Animate the circle
-            setTimeout(() => {
-                const offset = circumference - (50 / 100) * circumference;
-                circle.style.strokeDashoffset = offset;
-            }, 100);
-        }
-        
-        // Helper functions
-        function calculateConnectionScore(birthYear, potentialGrandparents) {
-            if (potentialGrandparents.length === 0) return 0;
-            
-            // Calculate average proximity to ideal 50-year gap
-            const idealGap = 50;
-            const totalProximity = potentialGrandparents.reduce((sum, person) => {
-                const actualGap = birthYear - person.born;
-                const proximity = 100 - Math.min(Math.abs(actualGap - idealGap) * 2, 100);
-                return sum + proximity;
-            }, 0);
-            
-            return Math.round(totalProximity / potentialGrandparents.length);
-        }
-        
-        function getContextDescription(year) {
-            if (year < 1920) return "global conflict and progressive social reform";
-            if (year < 1930) return "post-war prosperity and cultural experimentation";
-            if (year < 1940) return "economic hardship and political transformation";
-            if (year < 1950) return "global conflict and early atomic age developments";
-            if (year < 1960) return "post-war prosperity and Cold War tensions";
-            if (year < 1970) return "social upheaval, civil rights, and space exploration";
-            if (year < 1980) return "cultural change, technological advancement, and political tension";
-            if (year < 1990) return "Cold War politics, early computing, and economic shifts";
-            if (year < 2000) return "digital revolution and post-Cold War globalization";
-            return "early internet culture and post-millennium anxiety";
-        }
-        
-        function getConnectionExplanation(score) {
-            if (score >= 90) return "Exceptional match with idea grandparents who lived almost exactly 5 decades before you.";
-            if (score >= 75) return "Strong connection potential with thinkers from approximately 5 decades prior.";
-            if (score >= 50) return "Good connection with thinkers close to the five decade mark.";
-            if (score >= 25) return "Moderate connection with thinkers around the five decade range.";
-            return "Limited connection with ideal five-decade grandparents, but still valuable insights available.";
-        }
-        
-        // Initialize the form and email submission
-        document.addEventListener('DOMContentLoaded', function() {
-            // Email form submission
-            const emailForm = document.getElementById('email-form');
-            if (emailForm) {
-                emailForm.addEventListener('submit', function(e) {
-                    // You can uncomment this to prevent the actual submission and handle it yourself
-                    // e.preventDefault();
-                    console.log('Form submitted!');
-                    // In a real implementation, you might want to:
-                    // 1. Show a thank you message
-                    // 2. Track the submission in analytics
-                    // 3. Redirect to another page
-                });
-            }
-        });
-    </script>
-</body>
-</html>
+            // Apply learning style preferences
+            potentialGrandparents.forEach(person => {
+                // Add a learning style score based on keywords that match the selected style
+                let styleScore = 0;
+                
+                if (learningStyle === 'analytical') {
+                    const analyticalKey
