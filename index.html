@@ -282,15 +282,15 @@
             
             <div class="form-group">
                 <label>Select your primary interests (choose up to 3):</label>
-                <div class="interests-container">
-                    <div class="interest-tag" data-interest="science">Science</div>
-                    <div class="interest-tag" data-interest="philosophy">Philosophy</div>
-                    <div class="interest-tag" data-interest="art">Art & Literature</div>
-                    <div class="interest-tag" data-interest="business">Business & Entrepreneurship</div>
-                    <div class="interest-tag" data-interest="technology">Technology</div>
-                    <div class="interest-tag" data-interest="psychology">Psychology</div>
-                    <div class="interest-tag" data-interest="history">History & Politics</div>
-                    <div class="interest-tag" data-interest="spirituality">Spirituality</div>
+                <div class="interests-container" id="interests-container">
+                    <div class="interest-tag" onclick="toggleInterest(this)" data-interest="science">Science</div>
+                    <div class="interest-tag" onclick="toggleInterest(this)" data-interest="philosophy">Philosophy</div>
+                    <div class="interest-tag" onclick="toggleInterest(this)" data-interest="art">Art & Literature</div>
+                    <div class="interest-tag" onclick="toggleInterest(this)" data-interest="business">Business & Entrepreneurship</div>
+                    <div class="interest-tag" onclick="toggleInterest(this)" data-interest="technology">Technology</div>
+                    <div class="interest-tag" onclick="toggleInterest(this)" data-interest="psychology">Psychology</div>
+                    <div class="interest-tag" onclick="toggleInterest(this)" data-interest="history">History & Politics</div>
+                    <div class="interest-tag" onclick="toggleInterest(this)" data-interest="spirituality">Spirituality</div>
                 </div>
                 <input type="hidden" id="selected-interests" value="">
             </div>
@@ -305,7 +305,7 @@
                 <textarea id="challenges" placeholder="Describe the questions or problems you're currently wrestling with"></textarea>
             </div>
             
-            <button id="calculate-btn">Discover My Idea Grandparents</button>
+            <button type="button" id="calculate-button" onclick="calculateResults()">Discover My Idea Grandparents</button>
         </div>
         
         <div id="results" class="results">
@@ -459,60 +459,39 @@
             { start: 2002, end: 2020, name: "Post-9/11/Digital Era", context: "A period marked by global terrorism concerns, economic fluctuations, and digital transformation." }
         ];
         
-        // DOM elements
-        const surveyForm = document.getElementById('survey-form');
-        const resultsDiv = document.getElementById('results');
-        const calculateBtn = document.getElementById('calculate-btn');
-        const interestTags = document.querySelectorAll('.interest-tag');
+        // Function to toggle interest selection
+        function toggleInterest(element) {
+            const selectedInterests = document.querySelectorAll('.interest-tag.selected');
+            
+            if (element.classList.contains('selected')) {
+                element.classList.remove('selected');
+            } else if (selectedInterests.length < 3) {
+                element.classList.add('selected');
+            }
+            
+            // Update hidden input with selected interests
+            const selected = Array.from(document.querySelectorAll('.interest-tag.selected'))
+                .map(tag => tag.dataset.interest);
+            document.getElementById('selected-interests').value = selected.join(',');
+        }
         
-        // Interest tag selection (max 3)
-        interestTags.forEach(tag => {
-            tag.addEventListener('click', function() {
-                const selectedInterests = document.querySelectorAll('.interest-tag.selected');
-                
-                if (this.classList.contains('selected')) {
-                    this.classList.remove('selected');
-                } else if (selectedInterests.length < 3) {
-                    this.classList.add('selected');
-                }
-                
-                // Update hidden input with selected interests
-                const selected = Array.from(document.querySelectorAll('.interest-tag.selected'))
-                    .map(tag => tag.dataset.interest);
-                document.getElementById('selected-interests').value = selected.join(',');
-            });
-        });
-        
-        // Calculate button event
-        calculateBtn.addEventListener('click', function() {
-            const birthYear = parseInt(document.getElementById('birth-year').value);
+        // Function to calculate and display results
+        function calculateResults() {
+            const birthYearInput = document.getElementById('birth-year').value;
+            const birthYear = parseInt(birthYearInput);
             
             if (!birthYear || birthYear < 1900 || birthYear > 2023) {
                 alert('Please enter a valid birth year between 1900 and 2023');
                 return;
             }
             
-            const selectedInterests = document.getElementById('selected-interests').value;
-            if (!selectedInterests) {
+            const selectedInterestsValue = document.getElementById('selected-interests').value;
+            if (!selectedInterestsValue) {
                 alert('Please select at least one interest');
                 return;
             }
+            const interests = selectedInterestsValue.split(',');
             
-            // Calculate and display results
-            calculateResults(birthYear, selectedInterests.split(','));
-        });
-        
-        // Form submission event for email capture
-        document.getElementById('email-form').addEventListener('submit', function(e) {
-            // e.preventDefault(); // Uncomment to prevent actual form submission
-            
-            // In a real implementation, you would send this data to your backend
-            // For now, just show an alert
-            alert('Thank you! Your Five Decade Analysis will be sent to your email shortly.');
-        });
-        
-        // Function to calculate and display results
-        function calculateResults(birthYear, interests) {
             // Calculate idea grandparent year range (45-55 years before birth)
             const minGrandparentYear = birthYear - 55;
             const maxGrandparentYear = birthYear - 45;
@@ -544,10 +523,14 @@
             }
             
             // Remove duplicates
-            potentialGrandparents = Array.from(new Set(potentialGrandparents.map(a => a.name)))
-                .map(name => {
-                    return potentialGrandparents.find(a => a.name === name)
-                });
+            const uniqueNames = new Set();
+            potentialGrandparents = potentialGrandparents.filter(person => {
+                if (uniqueNames.has(person.name)) {
+                    return false;
+                }
+                uniqueNames.add(person.name);
+                return true;
+            });
             
             // Sort by closest to ideal 50-year gap
             potentialGrandparents.sort((a, b) => {
@@ -581,21 +564,25 @@
             const grandparentsList = document.getElementById('grandparents-list');
             grandparentsList.innerHTML = '';
             
-            potentialGrandparents.forEach(person => {
-                const element = document.createElement('div');
-                element.className = 'idea-grandparent';
-                
-                const lifespan = person.died ? `(${person.born}-${person.died})` : `(b. ${person.born})`;
-                const ageGap = birthYear - person.born;
-                
-                element.innerHTML = `
-                    <div class="idea-grandparent-name">${person.name} ${lifespan}</div>
-                    <div class="idea-grandparent-years">${ageGap} years older than you</div>
-                    <div class="idea-grandparent-description">${person.description}</div>
-                `;
-                
-                grandparentsList.appendChild(element);
-            });
+            if (potentialGrandparents.length === 0) {
+                grandparentsList.innerHTML = '<p>No matching idea grandparents found in our database for your selected interests and birth year range. Try selecting different interests or contact us for a personalized recommendation.</p>';
+            } else {
+                potentialGrandparents.forEach(person => {
+                    const element = document.createElement('div');
+                    element.className = 'idea-grandparent';
+                    
+                    const lifespan = person.died ? `(${person.born}-${person.died})` : `(b. ${person.born})`;
+                    const ageGap = birthYear - person.born;
+                    
+                    element.innerHTML = `
+                        <div class="idea-grandparent-name">${person.name} ${lifespan}</div>
+                        <div class="idea-grandparent-years">${ageGap} years older than you</div>
+                        <div class="idea-grandparent-description">${person.description}</div>
+                    `;
+                    
+                    grandparentsList.appendChild(element);
+                });
+            }
             
             // Update stats
             document.getElementById('era-value').textContent = era.name;
@@ -618,8 +605,8 @@
             document.getElementById('email-challenges').value = document.getElementById('challenges').value;
             
             // Show results
-            surveyForm.style.display = 'none';
-            resultsDiv.style.display = 'block';
+            document.getElementById('survey-form').style.display = 'none';
+            document.getElementById('results').style.display = 'block';
             
             // Animate the circle
             setTimeout(() => {
@@ -663,4 +650,23 @@
             if (score >= 25) return "Moderate connection with thinkers around the five decade range.";
             return "Limited connection with ideal five-decade grandparents, but still valuable insights available.";
         }
-            
+        
+        // Initialize the form and email submission
+        document.addEventListener('DOMContentLoaded', function() {
+            // Email form submission
+            const emailForm = document.getElementById('email-form');
+            if (emailForm) {
+                emailForm.addEventListener('submit', function(e) {
+                    // You can uncomment this to prevent the actual submission and handle it yourself
+                    // e.preventDefault();
+                    console.log('Form submitted!');
+                    // In a real implementation, you might want to:
+                    // 1. Show a thank you message
+                    // 2. Track the submission in analytics
+                    // 3. Redirect to another page
+                });
+            }
+        });
+    </script>
+</body>
+</html>
